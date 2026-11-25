@@ -131,4 +131,14 @@ function escapeHTML(value){
 showStudents();
 </script>
 <<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>>
+ <script>
+const SUPABASE_URL = "https://eflhvtbayksvdaaffesf.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_--s3y-hGbRgvjvQZ61hChA_KZoM8f0T";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+</script>
+ </body>
 </html>
