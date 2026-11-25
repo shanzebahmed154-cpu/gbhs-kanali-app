@@ -1,295 +1,248 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GBHS Kanali Management System</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial;background:#f1f5f9;color:#172554}
-header{background:#12345a;color:white;padding:22px 14px;text-align:center}
-header h2{margin:0 0 8px}
-main{max-width:700px;margin:auto;padding:16px}
-.card{background:white;padding:17px;border-radius:12px;margin:14px 0;box-shadow:0 2px 9px #0001}
-h3{color:#166534;margin-top:5px}
-input,select,textarea{width:100%;padding:12px;margin:7px 0 13px;border:1px solid #cbd5e1;border-radius:7px;font-size:15px}
-button{background:#166534;color:white;border:0;padding:13px 18px;border-radius:8px;font-size:15px;cursor:pointer}
-.secondary{background:#12345a}
-.student{border-bottom:1px solid #ddd;padding:12px 2px}
-.small{font-size:13px;color:#64748b}
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:15px}
+header{background:#123b68;color:white;padding:18px;text-align:center;border-radius:10px}
+.container{max-width:650px;margin:20px auto}
+.card{background:white;padding:18px;margin-bottom:15px;border-radius:10px;box-shadow:0 2px 8px #0001}
+input,select,button{width:100%;padding:12px;margin:7px 0;box-sizing:border-box;border:1px solid #ccc;border-radius:6px;font-size:16px}
+button{background:#145da0;color:white;border:0;cursor:pointer}
+button:hover{background:#0c4275}
 .hidden{display:none}
+.student{padding:10px;border-bottom:1px solid #ddd}
+#message{padding:10px;color:#b42318}
 </style>
 </head>
-
 <body>
 
 <header>
-<h2>GBHS KANALI</h2>
-<div>School Management System</div>
-<p><b>WE MAKE WAYS</b></p>
+<h2>GBHS Kanali</h2>
+<p>School Management System</p>
 </header>
 
-<main>
+<div class="container">
 
-<div class="card" id="loginCard">
+<div class="card" id="loginBox">
 <h3>Admin Login</h3>
-<label>Email Address</label>
-<input type="email" id="email" placeholder="Enter email" required>
-
-<label>Password</label>
-<input type="password" id="password" placeholder="Enter password" required>
-
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
 <button onclick="login()">Login</button>
-<p id="loginMessage" class="small"></p>
 </div>
 
-<div id="appArea" class="hidden">
+<div id="app" class="hidden">
 
 <div class="card">
-<h3>Students Management</h3>
-<p>Student Admission & Records</p>
-<button class="secondary" onclick="showForm()">+ Add New Student</button>
+<h3>Dashboard</h3>
+<p>Welcome to GBHS Kanali Management System</p>
 <button onclick="logout()">Logout</button>
 </div>
 
-<div class="card" id="formCard">
+<div class="card">
 <h3>New Student Admission</h3>
 
-<form id="studentForm">
-
-<label>Admission Number</label>
-<input id="admissionNo" required placeholder="Enter admission number">
-
-<label>Student Name</label>
-<input id="name" required placeholder="Student full name">
-
-<label>Father Name</label>
-<input id="father" required placeholder="Father name">
-
-<label>Class</label>
-<select id="className" required>
-<option value="">Loading classes...</option>
-</select>
-
+<input id="admissionNo" placeholder="Admission Number">
+<input id="studentName" placeholder="Student Name">
+<input id="fatherName" placeholder="Father Name">
 <label>Date of Birth</label>
 <input type="date" id="dob">
 
+<select id="classSelect">
+<option value="">Loading Classes...</option>
+</select>
+
 <label>Admission Date</label>
-<input type="date" id="admissionDate" required>
+<input type="date" id="admissionDate">
 
-<label>Phone Number</label>
-<input id="phone" type="tel" placeholder="Phone number">
+<input id="phone" placeholder="Phone Number">
+<input id="address" placeholder="Address">
 
-<label>Address</label>
-<textarea id="address" placeholder="Student address"></textarea>
+<select id="status">
+<option value="Active">Active</option>
+<option value="Inactive">Inactive</option>
+</select>
 
-<button type="submit">Save Student</button>
-</form>
-
-<p id="saveMessage" class="small"></p>
+<button onclick="saveStudent()">Save Student</button>
+<div id="message"></div>
 </div>
 
 <div class="card">
 <h3>Student Records</h3>
-<input id="search" placeholder="Search student..." oninput="showStudents()">
-<div id="studentList">Loading records...</div>
+<button onclick="loadStudents()">Refresh Records</button>
+<div id="studentsList">Loading...</div>
 </div>
 
 </div>
-</main>
-
-<footer style="text-align:center;padding:20px;color:#64748b">
-Government Boys High School Kanali<br>
-District Mirpur, AJK
-</footer>
+</div>
 
 <script>
-const SUPABASE_URL = "https://eflhvtbayksvdaaffesf.supabase.co";
-const SUPABASE_KEY = "sb_publishable_--s3y-hGbRgvjvQZ61hChA_KZoM8f0T";
+const SUPABASE_URL = "YOUR_EXISTING_SUPABASE_PROJECT_URL";
+const SUPABASE_KEY = "YOUR_EXISTING_PUBLISHABLE_KEY";
 
 const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
+SUPABASE_URL,
+SUPABASE_KEY
 );
 
-let students = [];
-let classes = [];
+let classesData = [];
 
 async function login(){
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const message = document.getElementById("loginMessage");
+const email = document.getElementById("email").value.trim();
+const password = document.getElementById("password").value;
 
-  message.textContent = "Logging in...";
+const {error} = await supabaseClient.auth.signInWithPassword({
+email,password
+});
 
-  const {data,error} = await supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
-
-  if(error){
-    message.textContent = "Login failed: " + error.message;
-    return;
-  }
-
-  await loadApp();
+if(error){
+alert("Login failed: " + error.message);
+return;
 }
 
-async function logout(){
-  await supabaseClient.auth.signOut();
-  location.reload();
+await showApp();
 }
 
-async function loadApp(){
-  document.getElementById("loginCard").classList.add("hidden");
-  document.getElementById("appArea").classList.remove("hidden");
+async function showApp(){
+document.getElementById("loginBox").classList.add("hidden");
+document.getElementById("app").classList.remove("hidden");
 
-  await loadClasses();
-  await loadStudents();
+await loadClasses();
+await loadStudents();
 }
 
 async function loadClasses(){
-  const {data,error} = await supabaseClient
-    .from("classes")
-    .select("id,class_name")
-    .order("class_name");
+const {data,error} = await supabaseClient
+.from("classes")
+.select("id,class_name")
+.order("id");
 
-  if(error){
-    alert("Classes error: " + error.message);
-    return;
-  }
+if(error){
+document.getElementById("message").textContent =
+"Classes error: " + error.message;
+return;
+}
 
-  classes = data || [];
+classesData = data || [];
 
-  const select = document.getElementById("className");
-  select.innerHTML = '<option value="">Select Class</option>';
+const select = document.getElementById("classSelect");
+select.innerHTML = '<option value="">Select Class</option>';
 
-  classes.forEach(c=>{
-    const option = document.createElement("option");
-    option.value = c.id;
-    option.textContent = c.class_name;
-    select.appendChild(option);
-  });
+classesData.forEach(c=>{
+const option = document.createElement("option");
+option.value = c.id;
+option.textContent = c.class_name;
+select.appendChild(option);
+});
+}
+
+async function saveStudent(){
+const message = document.getElementById("message");
+message.textContent = "Saving...";
+
+const classId = document.getElementById("classSelect").value;
+const selectedClass = classesData.find(c=>String(c.id)===String(classId));
+
+if(!classId || !selectedClass){
+message.textContent = "Please select a class.";
+return;
+}
+
+const record = {
+admission_no: document.getElementById("admissionNo").value.trim(),
+student_name: document.getElementById("studentName").value.trim(),
+father_name: document.getElementById("fatherName").value.trim(),
+date_of_birth: document.getElementById("dob").value || null,
+"class": selectedClass.class_name,
+admission_date: document.getElementById("admissionDate").value || null,
+phone: document.getElementById("phone").value.trim(),
+address: document.getElementById("address").value.trim(),
+status: document.getElementById("status").value,
+class_id: classId
+};
+
+if(!record.admission_no || !record.student_name || !record.father_name){
+message.textContent = "Please enter Admission Number, Student Name and Father Name.";
+return;
+}
+
+const {error} = await supabaseClient
+.from("students")
+.insert([record]);
+
+if(error){
+message.textContent = "Save failed: " + error.message;
+return;
+}
+
+message.textContent = "Student saved successfully!";
+
+["admissionNo","studentName","fatherName","dob",
+"admissionDate","phone","address"].forEach(id=>{
+document.getElementById(id).value="";
+});
+
+document.getElementById("classSelect").value="";
+await loadStudents();
 }
 
 async function loadStudents(){
-  const {data,error} = await supabaseClient
-    .from("students")
-    .select("*")
-    .order("created_at",{ascending:false});
+const list = document.getElementById("studentsList");
+list.textContent = "Loading...";
 
-  if(error){
-    document.getElementById("studentList").textContent =
-      "Records error: " + error.message;
-    return;
-  }
+const {data,error} = await supabaseClient
+.from("students")
+.select("admission_no,student_name,father_name,status")
+.order("created_at",{ascending:false});
 
-  students = data || [];
-  showStudents();
+if(error){
+list.textContent = "Error: " + error.message;
+return;
 }
 
-function showForm(){
-  document.getElementById("formCard")
-    .scrollIntoView({behavior:"smooth"});
+if(!data || data.length===0){
+list.textContent = "No student records found.";
+return;
 }
 
-document.getElementById("studentForm")
-.addEventListener("submit",async function(e){
+list.innerHTML = "";
 
-  e.preventDefault();
+data.forEach(s=>{
+const div = document.createElement("div");
+div.className = "student";
 
-  const message = document.getElementById("saveMessage");
-  message.textContent = "Saving student...";
+const heading = document.createElement("strong");
+heading.textContent = s.student_name || "";
 
-  const record = {
-    admission_no: document.getElementById("admissionNo").value.trim(),
-    name: document.getElementById("name").value.trim(),
-    father_name: document.getElementById("father").value.trim(),
-    date_of_birth: document.getElementById("dob").value || null,
-    admission: document.getElementById("admissionDate").value,
-    phone: document.getElementById("phone").value.trim(),
-    address: document.getElementById("address").value.trim(),
-    status: "Active",
-    class_id: Number(document.getElementById("className").value)
-  };
+const details = document.createElement("p");
+details.textContent =
+"Admission No: " + (s.admission_no || "") +
+" | Father: " + (s.father_name || "") +
+" | Status: " + (s.status || "");
 
-  if(!record.class_id){
-    message.textContent = "Please select a class.";
-    return;
-  }
-
-  const {error} = await supabaseClient
-    .from("students")
-    .insert([record]);
-
-  if(error){
-    message.textContent = "Save failed: " + error.message;
-    return;
-  }
-
-  this.reset();
-  message.textContent = "Student saved successfully!";
-  await loadStudents();
+div.appendChild(heading);
+div.appendChild(details);
+list.appendChild(div);
 });
-
-function showStudents(){
-  const q = document.getElementById("search").value.toLowerCase();
-  const list = document.getElementById("studentList");
-
-  const filtered = students.filter(s=>
-    [
-      s.name,
-      s.father_name,
-      s.admission_no
-    ].join(" ").toLowerCase().includes(q)
-  );
-
-  if(!filtered.length){
-    list.textContent = "No student records found.";
-    return;
-  }
-
-  list.innerHTML = filtered.map(s=>{
-    const classRecord = classes.find(c=>c.id===s.class_id);
-    const div = document.createElement("div");
-    div.className = "student";
-
-    const name = document.createElement("b");
-    name.textContent = s.name || "";
-    div.appendChild(name);
-
-    const details = document.createElement("div");
-    details.textContent =
-      "Admission: " + (s.admission_no || "") +
-      " | Father: " + (s.father_name || "") +
-      " | Class: " + (classRecord ? classRecord.class_name : "Unknown") +
-      " | Phone: " + (s.phone || "");
-
-    div.appendChild(details);
-    return div.outerHTML;
-  }).join("");
 }
 
-async function start(){
-  const {data,error} = await supabaseClient.auth.getSession();
-
-  if(error){
-    document.getElementById("loginMessage").textContent =
-      error.message;
-    return;
-  }
-
-  if(data.session){
-    await loadApp();
-  }
+async function logout(){
+await supabaseClient.auth.signOut();
+document.getElementById("app").classList.add("hidden");
+document.getElementById("loginBox").classList.remove("hidden");
 }
 
-start();
+async function checkSession(){
+const {data} = await supabaseClient.auth.getSession();
+if(data.session){
+await showApp();
+}
+}
+
+checkSession();
 </script>
-
 </body>
 </html>
