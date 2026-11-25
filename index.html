@@ -5,6 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GBHS Kanali Management System</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial;background:#f1f5f9;color:#172554}
@@ -18,10 +21,12 @@ button{background:#166534;color:white;border:0;padding:13px 18px;border-radius:8
 .secondary{background:#12345a}
 .student{border-bottom:1px solid #ddd;padding:12px 2px}
 .small{font-size:13px;color:#64748b}
-footer{text-align:center;padding:20px;color:#64748b}
+.hidden{display:none}
 </style>
 </head>
+
 <body>
+
 <header>
 <h2>GBHS KANALI</h2>
 <div>School Management System</div>
@@ -29,17 +34,35 @@ footer{text-align:center;padding:20px;color:#64748b}
 </header>
 
 <main>
+
+<div class="card" id="loginCard">
+<h3>Admin Login</h3>
+<label>Email Address</label>
+<input type="email" id="email" placeholder="Enter email" required>
+
+<label>Password</label>
+<input type="password" id="password" placeholder="Enter password" required>
+
+<button onclick="login()">Login</button>
+<p id="loginMessage" class="small"></p>
+</div>
+
+<div id="appArea" class="hidden">
+
 <div class="card">
 <h3>Students Management</h3>
 <p>Student Admission & Records</p>
 <button class="secondary" onclick="showForm()">+ Add New Student</button>
+<button onclick="logout()">Logout</button>
 </div>
 
 <div class="card" id="formCard">
 <h3>New Student Admission</h3>
+
 <form id="studentForm">
+
 <label>Admission Number</label>
-<input id="admission" required placeholder="Enter admission number">
+<input id="admissionNo" required placeholder="Enter admission number">
 
 <label>Student Name</label>
 <input id="name" required placeholder="Student full name">
@@ -49,16 +72,14 @@ footer{text-align:center;padding:20px;color:#64748b}
 
 <label>Class</label>
 <select id="className" required>
-<option value="">Select Class</option>
-<option>Class 1</option><option>Class 2</option>
-<option>Class 3</option><option>Class 4</option>
-<option>Class 5</option><option>Class 6</option>
-<option>Class 7</option><option>Class 8</option>
-<option>Class 9</option><option>Class 10</option>
+<option value="">Loading classes...</option>
 </select>
 
 <label>Date of Birth</label>
 <input type="date" id="dob">
+
+<label>Admission Date</label>
+<input type="date" id="admissionDate" required>
 
 <label>Phone Number</label>
 <input id="phone" type="tel" placeholder="Phone number">
@@ -68,77 +89,207 @@ footer{text-align:center;padding:20px;color:#64748b}
 
 <button type="submit">Save Student</button>
 </form>
+
+<p id="saveMessage" class="small"></p>
 </div>
 
 <div class="card">
 <h3>Student Records</h3>
 <input id="search" placeholder="Search student..." oninput="showStudents()">
-<div id="studentList">No student records yet.</div>
+<div id="studentList">Loading records...</div>
+</div>
+
 </div>
 </main>
 
-<footer>Government Boys High School Kanali<br>District Mirpur, AJK</footer>
+<footer style="text-align:center;padding:20px;color:#64748b">
+Government Boys High School Kanali<br>
+District Mirpur, AJK
+</footer>
 
 <script>
-function getStudents(){
- return JSON.parse(localStorage.getItem("gbhs_students") || "[]");
-}
-function showForm(){
- document.getElementById("formCard").scrollIntoView({behavior:"smooth"});
-}
-document.getElementById("studentForm").addEventListener("submit",function(e){
- e.preventDefault();
- const students=getStudents();
- const admission=document.getElementById("admission").value.trim();
- if(students.some(s=>s.admission===admission)){
-  alert("This admission number already exists.");
-  return;
- }
- students.push({
-  admission:admission,
-  name:document.getElementById("name").value.trim(),
-  father:document.getElementById("father").value.trim(),
-  className:document.getElementById("className").value,
-  dob:document.getElementById("dob").value,
-  phone:document.getElementById("phone").value.trim(),
-  address:document.getElementById("address").value.trim()
- });
- localStorage.setItem("gbhs_students",JSON.stringify(students));
- this.reset();
- showStudents();
- alert("Student saved on this device.");
-});
-function showStudents(){
- const q=document.getElementById("search").value.toLowerCase();
- const list=document.getElementById("studentList");
- const students=getStudents().filter(s=>
-  (s.name+" "+s.father+" "+s.admission+" "+s.className).toLowerCase().includes(q)
- );
- if(!students.length){list.textContent="No student records found.";return;}
- list.innerHTML=students.map(s=>
-  `<div class="student"><b>${escapeHTML(s.name)}</b><br>
-  Admission: ${escapeHTML(s.admission)}<br>
-  Father: ${escapeHTML(s.father)}<br>
-  Class: ${escapeHTML(s.className)}<br>
-  <span class="small">Phone: ${escapeHTML(s.phone)}</span></div>`
- ).join("");
-}
-function escapeHTML(value){
- return String(value).replace(/[&<>"']/g,c=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
- }[c]));
-}
-showStudents();
-</script>
-<<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>>
- <script>
-const SUPABASE_URL = "https://eflhvtbayksvdaaffesf.supabase.co/rest/v1/";
-const SUPABASE_KEY = "sb_publishable_--s3y-hGbRgvjvQZ61hChA_KZoM8f0T";
+const SUPABASE_URL = "https://eflhvtbayksvdaaffesf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_--s3y-hGbRgvjvQZ61hChA_KZoM8f0";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
+
+let students = [];
+let classes = [];
+
+async function login(){
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const message = document.getElementById("loginMessage");
+
+  message.textContent = "Logging in...";
+
+  const {data,error} = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if(error){
+    message.textContent = "Login failed: " + error.message;
+    return;
+  }
+
+  await loadApp();
+}
+
+async function logout(){
+  await supabaseClient.auth.signOut();
+  location.reload();
+}
+
+async function loadApp(){
+  document.getElementById("loginCard").classList.add("hidden");
+  document.getElementById("appArea").classList.remove("hidden");
+
+  await loadClasses();
+  await loadStudents();
+}
+
+async function loadClasses(){
+  const {data,error} = await supabaseClient
+    .from("classes")
+    .select("id,class_name")
+    .order("class_name");
+
+  if(error){
+    alert("Classes error: " + error.message);
+    return;
+  }
+
+  classes = data || [];
+
+  const select = document.getElementById("className");
+  select.innerHTML = '<option value="">Select Class</option>';
+
+  classes.forEach(c=>{
+    const option = document.createElement("option");
+    option.value = c.id;
+    option.textContent = c.class_name;
+    select.appendChild(option);
+  });
+}
+
+async function loadStudents(){
+  const {data,error} = await supabaseClient
+    .from("students")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    document.getElementById("studentList").textContent =
+      "Records error: " + error.message;
+    return;
+  }
+
+  students = data || [];
+  showStudents();
+}
+
+function showForm(){
+  document.getElementById("formCard")
+    .scrollIntoView({behavior:"smooth"});
+}
+
+document.getElementById("studentForm")
+.addEventListener("submit",async function(e){
+
+  e.preventDefault();
+
+  const message = document.getElementById("saveMessage");
+  message.textContent = "Saving student...";
+
+  const record = {
+    admission_no: document.getElementById("admissionNo").value.trim(),
+    name: document.getElementById("name").value.trim(),
+    father_name: document.getElementById("father").value.trim(),
+    date_of_birth: document.getElementById("dob").value || null,
+    admission: document.getElementById("admissionDate").value,
+    phone: document.getElementById("phone").value.trim(),
+    address: document.getElementById("address").value.trim(),
+    status: "Active",
+    class_id: Number(document.getElementById("className").value)
+  };
+
+  if(!record.class_id){
+    message.textContent = "Please select a class.";
+    return;
+  }
+
+  const {error} = await supabaseClient
+    .from("students")
+    .insert([record]);
+
+  if(error){
+    message.textContent = "Save failed: " + error.message;
+    return;
+  }
+
+  this.reset();
+  message.textContent = "Student saved successfully!";
+  await loadStudents();
+});
+
+function showStudents(){
+  const q = document.getElementById("search").value.toLowerCase();
+  const list = document.getElementById("studentList");
+
+  const filtered = students.filter(s=>
+    [
+      s.name,
+      s.father_name,
+      s.admission_no
+    ].join(" ").toLowerCase().includes(q)
+  );
+
+  if(!filtered.length){
+    list.textContent = "No student records found.";
+    return;
+  }
+
+  list.innerHTML = filtered.map(s=>{
+    const classRecord = classes.find(c=>c.id===s.class_id);
+    const div = document.createElement("div");
+    div.className = "student";
+
+    const name = document.createElement("b");
+    name.textContent = s.name || "";
+    div.appendChild(name);
+
+    const details = document.createElement("div");
+    details.textContent =
+      "Admission: " + (s.admission_no || "") +
+      " | Father: " + (s.father_name || "") +
+      " | Class: " + (classRecord ? classRecord.class_name : "Unknown") +
+      " | Phone: " + (s.phone || "");
+
+    div.appendChild(details);
+    return div.outerHTML;
+  }).join("");
+}
+
+async function start(){
+  const {data,error} = await supabaseClient.auth.getSession();
+
+  if(error){
+    document.getElementById("loginMessage").textContent =
+      error.message;
+    return;
+  }
+
+  if(data.session){
+    await loadApp();
+  }
+}
+
+start();
 </script>
- </body>
+
+</body>
 </html>
