@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GBHS Kanali Management System</title>
 <style>
+* { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -13,53 +14,62 @@ body {
   color: #172554;
 }
 header {
-  background: #102b50;
+  background: #12345a;
   color: white;
-  padding: 24px 18px;
+  padding: 28px 15px;
   text-align: center;
 }
-header h2 { margin: 0 0 8px; }
-main { padding: 18px; }
-h3 { color: #166534; }
+header h1 { font-size: 25px; margin: 0 0 10px; }
+header p { margin: 6px; }
+main { padding: 20px 15px; max-width: 650px; margin: auto; }
+.welcome { color: #166534; margin-bottom: 18px; }
 .grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 .item {
   background: white;
-  padding: 22px 10px;
-  border-radius: 12px;
+  border-radius: 14px;
+  padding: 24px 8px;
   text-align: center;
-  box-shadow: 0 2px 8px #0001;
+  font-size: 16px;
   font-weight: bold;
+  box-shadow: 0 3px 12px #00000012;
+  border-bottom: 4px solid #198754;
 }
+.emoji { font-size: 30px; display: block; margin-bottom: 10px; }
 footer {
   text-align: center;
-  padding: 20px;
+  padding: 25px 10px;
   color: #64748b;
+  font-size: 13px;
 }
 </style>
 </head>
 <body>
 <header>
-  <h2>GBHS Kanali</h2>
-  <div>School Management System</div>
-  <p>WE MAKE WAYS</p>
+  <h1>GBHS KANALI</h1>
+  <p>School Management System</p>
+  <p><b>WE MAKE WAYS</b></p>
+  <p>Session 2026-27</p>
 </header>
 <main>
-  <h3>Welcome to School Dashboard</h3>
+  <h3 class="welcome">Welcome to School Dashboard</h3>
   <div class="grid">
-    <div class="item">👨‍🎓<br>Students</div>
-    <div class="item">👨‍🏫<br>Teachers</div>
-    <div class="item">📅<br>Attendance</div>
-    <div class="item">📚<br>Exams & Results</div>
-    <div class="item">💳<br>Student Fees</div>
-    <div class="item">💰<br>School Finance</div>
-    <div class="item">📊<br>Reports</div>
-    <div class="item">⚙️<br>Settings</div>
+    <div class="item"><span class="emoji">👨‍🎓</span>Students</div>
+    <div class="item"><span class="emoji">👨‍🏫</span>Teachers</div>
+    <div class="item"><span class="emoji">📅</span>Attendance</div>
+    <div class="item"><span class="emoji">📚</span>Exams & Results</div>
+    <div class="item"><span class="emoji">💳</span>Student Fees</div>
+    <div class="item"><span class="emoji">💰</span>School Finance</div>
+    <div class="item"><span class="emoji">📊</span>Reports</div>
+    <div class="item"><span class="emoji">⚙️</span>Settings</div>
   </div>
 </main>
-<footer>Government Boys High School Kanali</footer>
+<footer>
+Government Boys High School Kanali<br>
+District Mirpur, AJK
+</footer>
 </body>
 </html>
